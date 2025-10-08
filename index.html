@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUANT AI FUND</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #00F6FF;
+            --secondary: #9D4EDD;
+            --accent: #FF2E63;
+            --dark: #0A0A1A;
+            --darker: #050510;
+            --light: #E0E0FF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        /* 导航栏 */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            background: rgba(10, 10, 26, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        nav.scrolled {
+            background: rgba(5, 5, 16, 0.95);
+            box-shadow: 0 5px 20px rgba(0, 246, 255, 0.1);
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        
+        .menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* 主容器 */
+        .container {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        /* 3D背景容器 */
+        #three-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 各章节通用样式 */
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 6rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        section h2 {
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+        
+        /* Hero 部分 */
+        .hero {
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero h1 {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 246, 255, 0.5);
+            letter-spacing: 5px;
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            opacity: 0.8;
+        }
+        
+        .cta-button {
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 30px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .cta-button:hover {
+            color: var(--darker);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--primary);
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .cta-button:hover::before {
+            left: 100%;
+        }
+        
+        /* 实时数据面板 */
+        .data-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .data-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 246, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .data-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 246, 255, 0.2);
+            border-color: var(--primary);
+        }
+        
+        .data-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 246, 255, 0.1), transparent);
+            z-index: -1;
+        }
+        
+        .data-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .data-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+        }
+        
+        .data-change {
+            font-size: 0.9rem;
+            color: #4ADE80;
+        }
+        
+        .data-change.negative {
+            color: #F87171;
+        }
+        
+        /* 策略可视化 */
+        #strategy-visualization {
+            width: 100%;
+            height: 600px;
+            position: relative;
+        }
+        
+        /* 投资者收益曲线 */
+        .chart-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 500px;
+            margin: 0 auto;
+        }
+        
+        /* 团队部分 */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(157, 78, 221, 0.2);
+        }
+        
+        .member-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid var(--secondary);
+        }
+        
+        .member-avatar::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: conic-gradient(from 0deg, var(--primary), var(--secondary), var(--primary));
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            background: var(--dark);
+        }
+        
+        .team-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-card p {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .join-button {
+            padding: 0.8rem 2rem;
+            background: transparent;
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        
+        .join-button:hover {
+            background: var(--secondary);
+            color: var(--dark);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--secondary);
+        }
+        
+        /* 邀请码模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: rgba(10, 10, 26, 0.95);
+            padding: 3rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid var(--secondary);
+            box-shadow: 0 0 50px rgba(157, 78, 221, 0.3);
+            position: relative;
+        }
+        
+        .modal h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .modal input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(157, 78, 221, 0.5);
+            border-radius: 5px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+        
+        .modal input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .modal-button {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-button.submit {
+            background: var(--secondary);
+            color: var(--dark);
+        }
+        
+        .modal-button.cancel {
+            background: transparent;
+            color: var(--light);
+            border: 1px solid var(--light);
+        }
+        
+        .modal-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 0.5);
+        }
+        
+        /* 页脚 */
+        footer {
+            position: relative;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(5, 5, 16, 0.8);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .copyright {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .social-icons a {
+            color: var(--light);
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icons a:hover {
+            color: var(--primary);
+            transform: translateY(-5px);
+            text-shadow: 0 0 10px var(--primary);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            section h2 {
+                font-size: 2.5rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .data-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 移动菜单 */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.98);
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: translateY(-100%);
+            transition: transform 0.5s ease;
+        }
+        
+        .mobile-menu.active {
+            transform: translateY(0);
+        }
+        
+        .mobile-menu .close-menu {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 2rem;
+            color: var(--light);
+            cursor: pointer;
+        }
+        
+        .mobile-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .mobile-links a {
+            color: var(--light);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-links a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav id="navbar">
+        <div class="logo">QUANT AI FUND</div>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#data">Live Data</a>
+            <a href="#strategy">Strategy</a>
+            <a href="#performance">Performance</a>
+            <a href="#team">Team</a>
+        </div>
+        <div class="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
+    
+    <!-- 移动菜单 -->
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <div class="mobile-links">
+            <a href="#home">Home</a>
+            <a href="#data">Live Data</a>
+            <a href="#strategy">Strategy</a>
+            <a href="#performance">Performance</a>
+            <a href="#team">Team</a>
+        </div>
+    </div>
+    
+    <!-- 3D背景容器 -->
+    <div id="three-bg"></div>
+    
+    <!-- 主内容区 -->
+    <div class="container">
+        <!-- Hero 部分 -->
+        <section id="home" class="hero">
+            <h1>QUANT AI FUND</h1>
+            <p>Beat the market in real-time</p>
+            <button class="cta-button">EXPLORE ALPHA</button>
+        </section>
+        
+        <!-- 实时数据面板 -->
+        <section id="data">
+            <h2>Live Market Data</h2>
+            <div class="data-panel">
+                <div class="data-card">
+                    <h3>SPY Price</h3>
+                    <div class="data-value">$452.67</div>
+                    <div class="data-change">+1.24%</div>
+                </div>
+                <div class="data-card">
+                    <h3>Fund NAV</h3>
+                    <div class="data-value">$128.45</div>
+                    <div class="data-change">+2.37%</div>
+                </div>
+                <div class="data-card">
+                    <h3>Daily Return</h3>
+                    <div class="data-value">+1.85%</div>
+                    <div class="data-change positive">+$2,450</div>
+                </div>
+                <div class="data-card">
+                    <h3>Prediction Accuracy</h3>
+                    <div class="data-value">87.3%</div>
+                    <div class="data-change">+2.1%</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 策略可视化 -->
+        <section id="strategy">
+            <h2>AI Strategy Visualization</h2>
+            <div id="strategy-visualization">
+                <!-- Three.js 3D脑图将在这里渲染 -->
+            </div>
+        </section>
+        
+        <!-- 投资者收益曲线 -->
+        <section id="performance">
+            <h2>Investment Performance</h2>
+            <div class="chart-container">
+                <canvas id="performance-chart"></canvas>
+            </div>
+        </section>
+        
+        <!-- 团队部分 -->
+        <section id="team">
+            <h2>Our Team</h2>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="member-avatar">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Team Member">
+                    </div>
+                    <h3>Dr. Alex Chen</h3>
+                    <p>Chief Quant Strategist</p>
+                    <p>Former Head of AI Research at Goldman Sachs</p>
+                </div>
+                <div class="team-card">
+                    <div class="member-avatar">
+                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Team Member">
+                    </div>
+                    <h3>Dr. Sarah Johnson</h3>
+                    <p>Head of Data Science</p>
+                    <p>PhD in Machine Learning from MIT</p>
+                </div>
+                <div class="team-card">
+                    <div class="member-avatar">
+                        <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Team Member">
+                    </div>
+                    <h3>Michael Rodriguez</h3>
+                    <p>Blockchain Architect</p>
+                    <p>10+ years in crypto infrastructure</p>
+                </div>
+            </div>
+            <button class="join-button" id="join-button">JOIN THE LEGION</button>
+        </section>
+    </div>
+    
+    <!-- 邀请码模态框 -->
+    <div class="modal" id="invite-modal">
+        <div class="modal-content">
+            <h3>Enter Invite Code</h3>
+            <input type="text" placeholder="Enter your invite code">
+            <div class="modal-buttons">
+                <button class="modal-button submit">Submit</button>
+                <button class="modal-button cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-content">
+            <div class="copyright">
+                &copy; 2023 QUANT AI FUND. All rights reserved.
+            </div>
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-telegram"></i></a>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 初始化GSAP ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        
+        // 按钮悬停效果
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                // 这里可以添加音效
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 0 20px var(--primary)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+        
+        // 移动菜单切换
+        const menuToggle = document.querySelector('.menu-toggle');
+        const closeMenu = document.querySelector('.close-menu');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        
+        menuToggle.addEventListener('click', function() {
+            mobileMenu.classList.add('active');
+        });
+        
+        closeMenu.addEventListener('click', function() {
+            mobileMenu.classList.remove('active');
+        });
+        
+        // 邀请码模态框
+        const joinButton = document.getElementById('join-button');
+        const inviteModal = document.getElementById('invite-modal');
+        const cancelButton = document.querySelector('.modal-button.cancel');
+        
+        joinButton.addEventListener('click', function() {
+            inviteModal.style.display = 'flex';
+        });
+        
+        cancelButton.addEventListener('click', function() {
+            inviteModal.style.display = 'none';
+        });
+        
+        // 章节动画
+        gsap.utils.toArray('section').forEach(section => {
+            gsap.fromTo(section, 
+                { opacity: 0, y: 50 },
+                { 
+                    opacity: 1, 
+                    y: 0, 
+                    duration: 1, 
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                        end: 'bottom 20%',
+                        toggleActions: 'play none none reverse'
+                    }
+                }
+            );
+        });
+        
+        // 实时数据更新
+        function updateData() {
+            const dataValues = document.querySelectorAll('.data-value');
+            dataValues.forEach(value => {
+                const currentValue = parseFloat(value.textContent.replace('$', '').replace('%', ''));
+                const change = (Math.random() - 0.5) * 2;
+                const newValue = currentValue + change;
+                
+                if (value.textContent.includes('$')) {
+                    value.textContent = '$' + newValue.toFixed(2);
+                } else if (value.textContent.includes('%')) {
+                    value.textContent = newValue.toFixed(2) + '%';
+                }
+                
+                // 更新变化指示器
+                const changeElement = value.nextElementSibling;
+                if (changeElement && changeElement.classList.contains('data-change')) {
+                    changeElement.textContent = (change > 0 ? '+' : '') + change.toFixed(2) + '%';
+                    changeElement.classList.toggle('negative', change < 0);
+                }
+            });
+        }
+        
+        setInterval(updateData, 3000);
+        
+        // 初始化性能图表
+        const ctx = document.getElementById('performance-chart').getContext('2d');
+        const performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan 2020', 'Jul 2020', 'Jan 2021', 'Jul 2021', 'Jan 2022', 'Jul 2022', 'Jan 2023', 'Jul 2023', 'Jan 2024', 'Jul 2024'],
+                datasets: [{
+                    label: 'Fund Performance',
+                    data: [100, 115, 135, 160, 190, 210, 250, 300, 350, 420],
+                    borderColor: '#00F6FF',
+                    backgroundColor: 'rgba(0, 246, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#00F6FF',
+                    pointBorderColor: '#0A0A1A',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(10, 10, 26, 0.8)',
+                        titleColor: '#00F6FF',
+                        bodyColor: '#E0E0FF',
+                        borderColor: '#00F6FF',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#E0E0FF'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#E0E0FF'
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+        
+        // Three.js 3D粒子背景 - 优化版本
+        let scene, camera, renderer, particles;
+        
+        function initThreeJS() {
+            // 创建场景
+            scene = new THREE.Scene();
+            
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+            
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('three-bg').appendChild(renderer.domElement);
+            
+            // 创建粒子 - 优化版本
+            const particleCount = 8000; // 增加粒子数量
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
+            
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                // 位置 - 调整分布范围
+                positions[i] = (Math.random() - 0.5) * 1500;
+                positions[i + 1] = (Math.random() - 0.5) * 1500;
+                positions[i + 2] = (Math.random() - 0.5) * 1500;
+                
+                // 颜色 - 增强星空感
+                const colorValue = Math.random() * 0.5 + 0.5; // 0.5-1.0
+                colors[i] = colorValue; // R
+                colors[i + 1] = colorValue; // G
+                colors[i + 2] = colorValue + 0.1; // B (稍微偏蓝)
+                
+                // 大小 - 增加尺寸变化范围
+                sizes[i/3] = Math.random() * 1.5 + 0.5; // 0.5-2.0
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            // 使用优化的粒子材质
+            const material = new THREE.PointsMaterial({
+                size: 1.2, // 增加基础尺寸
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8, // 提高不透明度
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending // 使用加法混合增强亮度
+            });
+            
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            
+            // 添加环境光
+            const ambientLight = new THREE.AmbientLight(0x222233);
+            scene.add(ambientLight);
+            
+            // 添加点光源
+            const pointLight = new THREE.PointLight(0x00F6FF, 0.7, 100);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+            
+            // 窗口调整大小
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画
+            animate();
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 旋转粒子 - 使用更平滑的运动
+            particles.rotation.x += 0.0003;
+            particles.rotation.y += 0.0004;
+            
+            // 添加轻微的上下浮动效果
+            const time = Date.now() * 0.0001;
+            particles.position.y = Math.sin(time) * 5;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // 初始化Three.js
+        initThreeJS();
+    </script>
+</body>
+</html>
